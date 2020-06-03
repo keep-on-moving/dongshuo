@@ -1,0 +1,63 @@
+
+
+
+<form class="validate add-form" novalidate="novalidate" style="width: auto">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="form-group no-margin">
+                <label for="field-7" class="control-label">预算总结</label>
+                <textarea class="form-control autogrow" name="role_desc" placeholder="{$info.msg}" style="overflow: hidden; word-wrap: break-word; resize: horizontal; height: 50px;" disabled="disabled"></textarea>
+            </div>
+        </div>
+    </div>
+<br>
+    <div class="row">
+        <div class="col-md-4">
+            <div class="form-group">
+                <label for="field-2" class="control-label">个数</label>
+                <input type="text" class="form-control" value="{$info.num}" disabled="disabled" id="num">
+            </div>  
+        </div>
+       
+        <div class="col-md-4">
+            <div class="form-group">
+                <label for="field-2" class="control-label">单价(单位:元)</label>
+                <input type="text" class="form-control" name="price" value="" onkeyup="jisuanqi(this)">
+            </div>  
+        </div>
+        <div class="col-md-4">
+            <div class="form-group">
+                <label for="field-2" class="control-label">总额</label>
+                <input type="text" class="form-control" id="total" value="" disabled="disabled">
+            </div>  
+        </div>
+    </div>
+
+    <script>
+        function jisuanqi(obj){
+            var price = $(obj).val();
+            var num = $('#num').val();
+            var total = price * num;
+	    total = returnFloat(total);
+            $('#total').val(total);
+        }
+
+  	function returnFloat(value){
+            var value=Math.round(parseFloat(value)*100)/100;
+            var xsd=value.toString().split(".");
+            if(xsd.length==1){
+                value=value.toString()+".00";
+                return value;
+            }
+            if(xsd.length>1){
+                if(xsd[1].length<2){
+                    value=value.toString()+"0";
+                }
+                return value;
+            }
+        }
+
+
+
+    </script>
+</form>

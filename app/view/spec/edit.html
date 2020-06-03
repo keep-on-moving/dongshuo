@@ -1,0 +1,34 @@
+
+
+
+<form class="validate edit_from" novalidate="novalidate" style="width: auto">
+
+	<div class="row">	
+		<div class="col-md-6">
+			<div class="form-group">
+				<label for="field-2" class="control-label">规格名称</label>
+				<input type="text" class="form-control" name="spec_name" value="{$info.spec_name}">
+			</div>	
+		</div>
+
+        <div class="col-md-6">
+            <div class="form-group">
+                <label for="field-2" class="control-label">个数</label>
+                <input type="text" class="form-control" name="spec_num" value="{$info.spec_num}">
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="form-group">
+                <label class="control-label">所属产品</label>
+                <select class="form-control" name="product_id">
+                    {volist name='products' id='vo'}
+                    <option value="{$vo->id}"  {eq name="vo.id" value= "$info.product_id"} selected="selected" {/eq} >{$vo->name}</option>
+                    {/volist}
+                </select>
+            </div>
+        </div>
+	</div>
+
+	<input type="hidden" name="id" value="{$info.id}">
+</form>
