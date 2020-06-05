@@ -31,6 +31,7 @@ class RuleService
         if( is_null( $error ) ){
             $rule = new Rule();
             $rule->username = $param['username'];
+            $rule->phone = $param['phone'];
             $rule->password = md5($param['password']);
             $rule->truename = $param['truename'];
             $rule->role_id = $param['role_id'];
@@ -56,6 +57,7 @@ class RuleService
             $rule = Rule::get($param['id']);
             $rule->username = $param['username'];
             $rule->password = md5($param['password']);
+            $rule->phone = $param['phone'];
             $rule->truename = $param['truename'];
             $rule->role_id = $param['role_id'];
             $rule->desc = $param['desc'];

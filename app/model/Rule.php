@@ -9,7 +9,7 @@ class Rule extends Model
 
 	public function getList($param){
 	    $where = [];
-	    if(isset($param['username'])){
+	    if(isset($param['username']) && $param['username']){
 	        $where['r.username'] = $param['username'];
         }
 	    return self::alias('r')
