@@ -73,7 +73,8 @@ class OutstorageService
 				$vv = explode('_',$v);
 				$product = Product::get([ 'sn' => $vv[0] ]);
 				$pNum = $product->num;
-				$product->num =  $pNum - $param['num'][$k];
+				$param['num'][$k] = sprintf("%.2f",  $param['num'][$k]);
+				$product->num =  bcsub($pNum,$param['num'][$k],2);
 				if($product->num < 0){
                     Db::rollback();
 					return ['error'	=>	100,'msg'	=>	'保存失败:'.$product->name.'仅有'.$pNum.$product->unit."低于要出库个数！"];
@@ -154,7 +155,8 @@ class OutstorageService
 				$vv = explode('_',$v);
 				$product = Product::get([ 'sn' => $vv[0] ]);
 				$pNum = $product->num;
-				$product->num =  $pNum - $param['num'][$k];
+                $param['num'][$k] = sprintf("%.2f",  $param['num'][$k]);
+                $product->num =  bcsub($pNum,$param['num'][$k],2);
 				if($product->num < 0){
 				    Db::rollback();
 					return ['error'	=>	100,'msg'	=>	'保存失败:'.$product->name.'仅有'.$pNum.$product->unit."低于要出库个数！"];

@@ -69,67 +69,66 @@ class InstorageService
 			$order->state 		= 1;
 			$order->add_time	= time();
 			$order->product_id  = $param['product_id'];
-			$order->return_num  = $param['return_num'];
+			$order->return_num  = sprintf("%.2f", $param['return_num']);
 			$order->effective_time = $param['effective_time'] ? $param['effective_time']: null;
 
 			$temp = [];
             Db::startTrans();
-		if(isset($param['spec_id'])){
+            if(isset($param['spec_id'])){
+                foreach ( $param['spec_id'] as $k=>$v) {
+                    $param['num'][$k] = sprintf("%.2f", $param['num'][$k]);
+                    $temp[] =  [
+                        $v,
+                        $param['spec_name'][$k],
+                        $param['num'][$k],
+                        $param['time'][$k],
+                        $param['unit'][$k]
+                     ];
 
-			foreach ( $param['spec_id'] as $k=>$v) {
-				$temp[] =  [
-				    $v,
-                    $param['spec_name'][$k],
-					$param['num'][$k],
-                    $param['time'][$k],
-                    $param['unit'][$k]
-				 ];
-
-				$pec = Spec::get([ 'id' => $v ]);
-				if(!$param['num'][$k]){
-                    $param['num'][$k] = 0;
+                    $pec = Spec::get([ 'id' => $v ]);
+                    if(!$param['num'][$k]){
+                        $param['num'][$k] = 0;
+                    }
+                    $pec->store =  bcadd($param['num'][$k], $pec->store, 2);
+                    $pec->save();
                 }
-                $pec->store +=  $param['num'][$k];
-                $pec->save();
-			}
 
-			if($param['return_num']){
-			    $product = Product::get(['id' => $param['product_id']]);
-			    $product->num += $param['return_num'];
-			    $product->save();
+                $canMakeNum = 0;
+                if($temp){
+                    $successNum = [];
+                    foreach ($temp as $val){
+                        $spec_id = $val[0];
+                        $num = $val[2];
+                        $spec = db('product_spec')->find($spec_id);
+                        $successNum[] = bcdiv($num, $spec['spec_num'], 0);
+                    }
+
+                    $specCount = db('product_spec')->where('product_id', $param['product_id'])->count();
+                    if($specCount == count($successNum)){
+                        $canMakeNum = min($successNum);
+                    }
+                }
+                $productModel = new Product();
+                if($param['type'] == '采购入库'){
+                    $order->expected_num = '部分材料不足，不能生产产品';
+                    if($canMakeNum){
+                        $order->expected_num = $productModel->changeUnit($param['product_id'], $canMakeNum);
+                    }
+                }else{
+                    $order->expected_num = $productModel->changeUnit($param['product_id'], $param['return_num']);
+                }
+
+                $order->res = json_encode( $temp );
+                 }else{
+                $order->res = json_encode([]);
+            }
+            if($param['return_num']){
+                $product = Product::get(['id' => $param['product_id']]);
+                $product->num = bcadd($product->num, $param['return_num'],2);
+                $product->save();
             }
 
-			$canMakeNum = 0;
-            if($temp){
-                $successNum = [];
-                foreach ($temp as $val){
-                    $spec_id = $val[0];
-                    $num = $val[2];
-                    $spec = db('product_spec')->find($spec_id);
-                    $successNum[] = bcdiv($num, $spec['spec_num'], 0);
-                }
-
-                $specCount = db('product_spec')->where('product_id', $param['product_id'])->count();
-                if($specCount == count($successNum)){
-                    $canMakeNum = min($successNum);
-                }
-            }
-            $productModel = new Product();
-            if($param['type'] == '采购入库'){
-                $order->expected_num = '部分材料不足，不能生产产品';
-                if($canMakeNum){
-                    $order->expected_num = $productModel->changeUnit($param['product_id'], $canMakeNum);
-                }
-            }else{
-                $order->expected_num = $productModel->changeUnit($param['product_id'], $param['return_num']);
-            }
-
-			$order->res = json_encode( $temp );
-             }else{
-
-		$order->res = json_encode([]);
-	     }  
-			// 检测错误
+            // 检测错误
 			if( $order->save() ){
 			    Db::commit();
 				return ['error'	=>	0,'msg'	=>	'保存成功'];
@@ -158,6 +157,7 @@ class InstorageService
 
 		if( is_null( $error ) ){
 			$order = Order::get($param['id']);
+			$returnNum = $order->return_num;
 			if (time() > ($order['add_time'] + 24*3600)){
                 return ['error'	=>	100,'msg' => '订单已经生成24小时，不支持修改！'];
             }
@@ -169,7 +169,7 @@ class InstorageService
             $order->supplier 	= $param['supplier'];
             $order->add_time	= time();
             $order->product_id  = $param['product_id'];
-            $order->return_num  = $param['return_num'];
+            $order->return_num  = sprintf("%.2f", $param['return_num']);
             $order->effective_time = $param['effective_time'] ? $param['effective_time'] : null;
 
             $temp = [];
@@ -182,57 +182,62 @@ class InstorageService
                     \db('product_spec')->where('id', $val[0])->setDec('store', $val[2]);
                 }
             }
-	    if(isset($param['spec_id']) && $param['spec_id']){
-            foreach ( $param['spec_id'] as $k=>$v) {
-                $temp[] =  [
-                    $v,
-                    $param['spec_name'][$k],
-                    $param['num'][$k],
-                    $param['time'][$k],
-                    $param['unit'][$k]
-                ];
-
-                $pec = Spec::get([ 'id' => $v ]);
-                if(!$param['num'][$k]){
-                    $param['num'][$k] = 0;
-                }
-                $pec->store +=  $param['num'][$k];
-                $pec->save();
-            }
 
             if($param['return_num']){
-                $product = Product::get(['id' => $param['product_id']]);
-                $product->num += $param['return_num'];
-                $product->save();
+                \db('product')->where('id', $param['product_id'])->setDec('num', $returnNum);
             }
+            if(isset($param['spec_id']) && $param['spec_id']){
+                foreach ( $param['spec_id'] as $k=>$v) {
+                    $param['num'][$k] = sprintf("%.2f", $param['num'][$k]);
+                    $temp[] =  [
+                        $v,
+                        $param['spec_name'][$k],
+                        $param['num'][$k],
+                        $param['time'][$k],
+                        $param['unit'][$k]
+                    ];
 
-            $canMakeNum = 0;
-            if($temp){
-                $successNum = [];
-                foreach ($temp as $val){
-                    $spec_id = $val[0];
-                    $num = $val[2];
-                    $spec = db('product_spec')->find($spec_id);
-                    $successNum[] = bcdiv($num, $spec['spec_num'], 0);
+                    $pec = Spec::get([ 'id' => $v ]);
+                    if(!$param['num'][$k]){
+                        $param['num'][$k] = 0;
+                    }
+                    $pec->store =  bcadd($param['num'][$k], $pec->store, 2);
+                    $pec->save();
                 }
 
-                $specCount = db('product_spec')->where('product_id', $param['product_id'])->count();
-                if($specCount == count($successNum)){
-                    $canMakeNum = min($successNum);
+                $canMakeNum = 0;
+                if($temp){
+                    $successNum = [];
+                    foreach ($temp as $val){
+                        $spec_id = $val[0];
+                        $num = $val[2];
+                        $spec = db('product_spec')->find($spec_id);
+                        $successNum[] = bcdiv($num, $spec['spec_num'], 0);
+                    }
+
+                    $specCount = db('product_spec')->where('product_id', $param['product_id'])->count();
+                    if($specCount == count($successNum)){
+                        $canMakeNum = min($successNum);
+                    }
+                }
+                $productModel = new Product();
+                if($param['type'] == '采购入库'){
+                    $order->expected_num = '部分材料不足，不能生产产品';
+                    if($canMakeNum){
+                        $order->expected_num = $productModel->changeUnit($param['product_id'], $canMakeNum);
+                    }
+                }else{
+                    $order->expected_num = $productModel->changeUnit($param['product_id'], $param['return_num']);
                 }
             }
-            $productModel = new Product();
-            if($param['type'] == '采购入库'){
-                $order->expected_num = '部分材料不足，不能生产产品';
-                if($canMakeNum){
-                    $order->expected_num = $productModel->changeUnit($param['product_id'], $canMakeNum);
-                }
-            }else{
-                $order->expected_num = $productModel->changeUnit($param['product_id'], $param['return_num']);
-            }
-	   }
 
             $order->res = json_encode( $temp );
+            if($param['return_num']){
+                $product = Product::get(['id' => $param['product_id']]);
+                $product->num = sprintf("%.2f", $product->num);
+                $product->num = bcadd($product->num, $param['return_num'],2);
+                $product->save();
+            }
 
 			// 检测错误
 			if( $order->save() ){
