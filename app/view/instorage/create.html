@@ -24,8 +24,8 @@
             <div class="form-group">
                 <label class="control-label">入库类型</label>
                 <select class="form-control" name="type" onchange="typeChange(this)">
-                    <option value="采购入库" selected="selected">采购入库</option>
-                    <option value="销售退货" >销售退货</option>
+                    <option value="材料入库" selected="selected">材料入库</option>
+                    <option value="成品入库" >成品入库</option>
                 </select>
             </div>
         </div>
@@ -72,8 +72,8 @@
     <div class="row" id="return_product" style="display:none">
         <div class="col-md-4">
             <div class="form-group">
-                <label for="field-2" class="control-label">退货数</label>
-                <input type="text" class="form-control" name="return_num" placeholder="请输入退货数">
+                <label for="field-2" class="control-label">成品数</label>
+                <input type="text" class="form-control" name="return_num" placeholder="请输入成品数">
             </div>
         </div>
         <div class="col-md-4">
@@ -99,7 +99,7 @@
 
         function typeChange(obj){
             var type = $(obj).val();
-            if(type == '采购入库'){
+            if(type == '材料入库'){
                 var checkedProduct = jQuery('#checkedProduct');
                 changeProduct(checkedProduct);
                 jQuery('#return_product').hide();

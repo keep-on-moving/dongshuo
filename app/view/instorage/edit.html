@@ -26,12 +26,12 @@
 				<label class="control-label">入库类型</label>
 				<select class="form-control" name="type" onchange="typeChange(this)">
 					<?php
-           				if($info->type == '采购入库'){
-							echo '<option value="采购入库" selected="selected">采购入库</option>
-					<option value="销售退货" >销售退货</option>';
+           				if($info->type == '材料入库'){
+							echo '<option value="材料入库" selected="selected">材料入库</option>
+					<option value="成品入库" >成品入库</option>';
 						}else{
-					echo '<option value="采购入库" >采购入库</option>
-					<option value="销售退货" selected="selected">销售退货</option>';
+					echo '<option value="材料入库" >材料入库</option>
+					<option value="成品入库" selected="selected">成品入库</option>';
 						}
 					?>
 				</select>
@@ -77,10 +77,10 @@
 
 	</div>
 
-	<div class="row" id="return_product"  {eq name="$info.type" value= "采购入库"}  style="display:none" {/eq} >
+	<div class="row" id="return_product"  {eq name="$info.type" value= "材料入库"}  style="display:none" {/eq} >
 		<div class="col-md-4">
 			<div class="form-group">
-				<label for="field-2" class="control-label">退货数</label>
+				<label for="field-2" class="control-label">成品数</label>
 				<input type="text" class="form-control" name="return_num" value="{$info.return_num}">
 			</div>
 		</div>
@@ -108,7 +108,7 @@
 
 		function typeChange(obj){
 			var type = $(obj).val();
-			if(type == '采购入库'){
+			if(type == '材料入库'){
 				var checkedProduct = jQuery('#checkedProduct');
 				changeProduct(checkedProduct);
 				jQuery('#return_product').hide();
