@@ -64,7 +64,6 @@ class SpecService{
 			$spec 			= new Spec();
 			$spec->product_id 		= $param['product_id'];
 			$spec->spec_name 		= $param['spec_name'];
-			$spec->spec_num 		= $param['spec_num'];
 			$spec->add_time 	= date('Y-m-d H:i:s');
 
 			// 检测错误
@@ -96,7 +95,6 @@ class SpecService{
 			$spec = Spec::get($param['id']);
 			$spec->product_id 		= $param['product_id'];
 			$spec->spec_name 		= $param['spec_name'];
-			$spec->spec_num 		= $param['spec_num'];
 			$spec->add_time 	= date('Y-m-d H:i:s');
 
 			// 检测错误

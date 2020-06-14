@@ -12,7 +12,7 @@ use think\Request,
 class InstorageService
 {
 
-    public function page(){
+    public function page($state){
 
     	$data 	= Request::instance()->get();
     	$where 	= [];
@@ -29,7 +29,7 @@ class InstorageService
             $where['add_time'] = ['<', strtotime($data['end_time'])];
         }
 
-    	$where['state'] 		= 	'1';
+    	$where['state'] 		=  $state;
     	// $config['page'] = isset($data['page']) ? $data['page'] : 1;
 		$data = Order::where($where)->order('id', 'desc')->paginate(10000);
 		foreach ($data as $key => $val){
@@ -55,9 +55,7 @@ class InstorageService
 		$param = Request::instance()->param();	//获取参数
 		$error = $this->_validate($param); 		// 是否通过验证
 
-
 		if( is_null( $error ) ){
-
 			$order 				= new Order();
 			$order->sn 			= $param['sn'];
 			$order->type 		= $param['type'];
@@ -66,7 +64,7 @@ class InstorageService
 			$order->instorage_checker_a = $param['instorage_checker_a'];
 			$order->instorage_checker_b = $param['instorage_checker_b'];
 			$order->supplier 	= $param['supplier'];
-			$order->state 		= 1;
+			$order->state 		= $param['state'];
 			$order->add_time	= time();
 			$order->product_id  = $param['product_id'];
 			$order->return_num  = sprintf("%.2f", $param['return_num']);
@@ -75,58 +73,51 @@ class InstorageService
 			$temp = [];
             Db::startTrans();
             if(isset($param['spec_id'])){
+                $total = 0;
+                $productModel = new Product();
                 foreach ( $param['spec_id'] as $k=>$v) {
                     $param['num'][$k] = sprintf("%.2f", $param['num'][$k]);
+                    if ($order->state == 1){
+                        if($param['num'][$k] > 0){
+                            $numData = $productModel->tarPacket($param['product_id'], $param['unit'][$k], $param['num'][$k]);
+                            if($numData['code'] == 400){
+                                Db::commit();
+                                return ['error'	=>	100,'msg'	=> $numData['msg']];
+                            }
+                        }else{
+                            $numData['msg'] =  0;
+                        }
+                    }else{
+                        $numData['msg'] =  $param['num'][$k];
+                    }
+
                     $temp[] =  [
                         $v,
                         $param['spec_name'][$k],
                         $param['num'][$k],
                         $param['time'][$k],
-                        $param['unit'][$k]
-                     ];
+                        $param['unit'][$k],
+                        $numData['msg']
+                    ];
 
                     $pec = Spec::get([ 'id' => $v ]);
                     if(!$param['num'][$k]){
                         $param['num'][$k] = 0;
                     }
-                    $pec->store =  bcadd($param['num'][$k], $pec->store, 2);
+
+                    $total = bcadd($total, $numData['msg']);
+                    $pec->store =  bcadd($numData['msg'], $pec->store, 2);
+
                     $pec->save();
                 }
 
-                $canMakeNum = 0;
-                if($temp){
-                    $successNum = [];
-                    foreach ($temp as $val){
-                        $spec_id = $val[0];
-                        $num = $val[2];
-                        $spec = db('product_spec')->find($spec_id);
-                        $successNum[] = bcdiv($num, $spec['spec_num'], 0);
-                    }
-
-                    $specCount = db('product_spec')->where('product_id', $param['product_id'])->count();
-                    if($specCount == count($successNum)){
-                        $canMakeNum = min($successNum);
-                    }
-                }
-                $productModel = new Product();
-                if($param['type'] == '采购入库'){
-                    $order->expected_num = '部分材料不足，不能生产产品';
-                    if($canMakeNum){
-                        $order->expected_num = $productModel->changeUnit($param['product_id'], $canMakeNum);
-                    }
-                }else{
-                    $order->expected_num = $productModel->changeUnit($param['product_id'], $param['return_num']);
+                if($order->state == 1){
+                    $order->expected_num = $total;
                 }
 
                 $order->res = json_encode( $temp );
-                 }else{
-                $order->res = json_encode([]);
             }
-            if($param['return_num']){
-                $product = Product::get(['id' => $param['product_id']]);
-                $product->num = bcadd($product->num, $param['return_num'],2);
-                $product->save();
-            }
+
 
             // 检测错误
 			if( $order->save() ){
@@ -161,7 +152,6 @@ class InstorageService
 			if (time() > ($order['add_time'] + 24*3600)){
                 return ['error'	=>	100,'msg' => '订单已经生成24小时，不支持修改！'];
             }
-            $order->type 		= $param['type'];
             $order->desc 		= $param['desc'];
             $order->author 		= $param['author'];
             $order->instorage_checker_a = $param['instorage_checker_a'];
@@ -183,61 +173,50 @@ class InstorageService
                 }
             }
 
-            if($param['return_num']){
-                \db('product')->where('id', $param['product_id'])->setDec('num', $returnNum);
-            }
             if(isset($param['spec_id']) && $param['spec_id']){
+                $total = 0;
+                $productModel = new Product();
                 foreach ( $param['spec_id'] as $k=>$v) {
                     $param['num'][$k] = sprintf("%.2f", $param['num'][$k]);
+                    //todo 转换单位
+                    if ($order->state == 1){
+                        if($param['num'][$k] > 0){
+                            $numData = $productModel->tarPacket($param['product_id'], $param['unit'][$k], $param['num'][$k]);
+                            if($numData['code'] == 400){
+                                Db::commit();
+                                return ['error'	=>	100,'msg'	=> $numData['msg']];
+                            }
+                        }else{
+                            $numData['msg'] =  0;
+                        }
+                    }else{
+                        $numData['msg'] =  $param['num'][$k];
+                    }
                     $temp[] =  [
                         $v,
                         $param['spec_name'][$k],
                         $param['num'][$k],
                         $param['time'][$k],
-                        $param['unit'][$k]
+                        $param['unit'][$k],
+                        $numData['msg']
                     ];
 
                     $pec = Spec::get([ 'id' => $v ]);
                     if(!$param['num'][$k]){
                         $param['num'][$k] = 0;
                     }
-                    $pec->store =  bcadd($param['num'][$k], $pec->store, 2);
+
+                    $total = bcadd($total, $numData['msg']);
+                    $pec->store =  bcadd($numData['msg'], $pec->store, 2);
+
                     $pec->save();
                 }
-
-                $canMakeNum = 0;
-                if($temp){
-                    $successNum = [];
-                    foreach ($temp as $val){
-                        $spec_id = $val[0];
-                        $num = $val[2];
-                        $spec = db('product_spec')->find($spec_id);
-                        $successNum[] = bcdiv($num, $spec['spec_num'], 0);
-                    }
-
-                    $specCount = db('product_spec')->where('product_id', $param['product_id'])->count();
-                    if($specCount == count($successNum)){
-                        $canMakeNum = min($successNum);
-                    }
-                }
-                $productModel = new Product();
-                if($param['type'] == '采购入库'){
-                    $order->expected_num = '部分材料不足，不能生产产品';
-                    if($canMakeNum){
-                        $order->expected_num = $productModel->changeUnit($param['product_id'], $canMakeNum);
-                    }
-                }else{
-                    $order->expected_num = $productModel->changeUnit($param['product_id'], $param['return_num']);
+                if($order->state == 1){//TODO 如果是成品则，显示入库多少个，单位换算
+                    $order->expected_num = $total;
                 }
             }
 
             $order->res = json_encode( $temp );
-            if($param['return_num']){
-                $product = Product::get(['id' => $param['product_id']]);
-                $product->num = sprintf("%.2f", $product->num);
-                $product->num = bcadd($product->num, $param['return_num'],2);
-                $product->save();
-            }
 
 			// 检测错误
 			if( $order->save() ){

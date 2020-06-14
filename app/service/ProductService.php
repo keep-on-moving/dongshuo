@@ -64,7 +64,7 @@ class ProductService{
 			$product->unit 		= $param['unit'];
 			$product->supplier 	= $param['supplier'];
 			$product->customer 	= $param['customer'];
-			$product->spec 		= $param['spec'];
+			$product->state 	= $param['state'];
 			$product->price 	= $param['price'];
 			$product->desc 		= $param['desc'];
 			// $product->status 	= $param['status'];
@@ -136,7 +136,7 @@ class ProductService{
 			$product->unit 		= $param['unit'];
 			$product->supplier 	= $param['supplier'];
 			$product->customer 	= $param['customer'];
-			$product->spec 		= $param['spec'];
+			$product->state 	= $param['state'];
 			$product->price 	= $param['price'];
 			$product->desc 		= $param['desc'];
 			$product->status 	= $param['status'];

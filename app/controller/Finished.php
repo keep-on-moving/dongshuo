@@ -1,6 +1,5 @@
 <?php
 namespace app\controller;
-use app\model\Unit;
 use app\service\ExcelExportService;
 use app\service\InstorageService,
     app\model\Product,
@@ -8,7 +7,7 @@ use app\service\InstorageService,
     app\model\Order;
 use think\Request;
 
-class Instorage extends Base
+class Finished extends Base
 {
     protected $service;
     public function __construct(InstorageService $service)
@@ -17,9 +16,15 @@ class Instorage extends Base
         $this->service = $service;
     }  
 
-    public function index()
+    public function instorage()
     {
-        $this->assign(['list'  =>  $this->service->page()]);
+        $this->assign(['list'  =>  $this->service->page(1)]);
+        return view();
+    }
+
+    public function outstorage()
+    {
+        $this->assign(['list'  =>  $this->service->page(2)]);
         return view();
     }
 
@@ -29,39 +34,17 @@ class Instorage extends Base
         $this->assign([
             'product'    =>  Product::all(  [ 'status' => 0, 'state' => $data['state'] ] ),
             'supplier'   =>  Supplier::all(  [ 'status' => 0 ] ),
-            'state' => $data['state'] == 1 ? 1 : 3,
-            'type' => $data['state'] == 1 ? '成品入库' : '材料入库'
+            'state' => $data['state']
         ]);
+
 
         return view();
     }
 
     public function spec(){
         $data 	= Request::instance()->get();
-        $product = Product::get(['id', $data['product_id']]);
-
-        $unit = [];
-        $unit1 = Unit::get(['id', $product['unit1']]);
-        $unit2 = Unit::get(['id', $product['unit2']]);
-        $unit3 = Unit::get(['id', $product['unit3']]);
-
-        if($unit1){
-            $unit[] = $unit1['name'];
-        }
-        if($unit2){
-            $unit[] = $unit2['name'];
-        }
-        if($unit3){
-            $unit[] = $unit3['name'];
-        }
-
-        if(!$unit){
-            $unit[] = $product['unit'];
-        }
-
         $specs = \db('product_spec')->where('product_id', $data['product_id'])->select();
         $this->assign('specs', $specs);
-        $this->assign('units', $unit);
 
         return view();
     }
@@ -83,25 +66,10 @@ class Instorage extends Base
 
     public function edit($id)
     {
-        $order = Order::get(['id'=>$id]);
-        $unit = array(
-            '千克',
-            '只',
-            '箱',
-            '个'
-        );
-        if($order['state'] == 1){//1-成品入库单  2-成品出库单  3-材料入库单  4-材料出库单
-            $unit = array(
-                '袋',
-                '盒',
-                '箱'
-            );
-        }
         $this->assign([
             'product'    =>  Product::all(  [ 'status' => 0 ] ),
             'supplier'   =>  Supplier::all(  [ 'status' => 0 ] ),
-            'info'  =>  $this->service->edit($id),
-            'units' => $unit
+            'info'  =>  $this->service->edit($id)
         ]);
 
         return view();

@@ -24,7 +24,7 @@
 		<div class="col-md-4">
 			<div class="form-group">
 				<label class="control-label">入库类型</label>
-				<select class="form-control" name="type" onchange="typeChange(this)">
+				<select class="form-control" onchange="typeChange(this)"  disabled>
 					<?php
            				if($info->type == '材料入库'){
 							echo '<option value="材料入库" selected="selected">材料入库</option>
@@ -66,7 +66,7 @@
 		<div class="col-md-4">
 			<div class="form-group">
 				<label class="control-label">产品名称--先选择产品在选规格</label>
-				<select class="form-control" name="product_id" onchange="changeProduct(this)" id="checkedProduct">
+				<select class="form-control" name="product_id" onchange="changeProduct(this)" id="checkedProduct" disabled>
 					<option value="默认" >默认</option>
 					{volist name='product' id='vo'}
 					<option value="{$vo.id}" {eq name="vo.id" value= "$info.product_id"} selected="selected" {/eq}>{$vo.name}</option>
@@ -77,6 +77,7 @@
 
 	</div>
 
+	<input type="hidden" name="product_id" value="{$info.product_id}">
 	<div class="row" id="return_product"  {eq name="$info.type" value= "材料入库"}  style="display:none" {/eq} >
 		<div class="col-md-4">
 			<div class="form-group">
@@ -108,15 +109,9 @@
 
 		function typeChange(obj){
 			var type = $(obj).val();
-			if(type == '材料入库'){
-				var checkedProduct = jQuery('#checkedProduct');
-				changeProduct(checkedProduct);
-				jQuery('#return_product').hide();
-			}else{
-				jQuery('#spec_table').html('');
-				jQuery('#return_product').show();
-			}
-
+			var checkedProduct = jQuery('#checkedProduct');
+			changeProduct(checkedProduct);
+			jQuery('#return_product').hide();
 		}
 	</script>
 
@@ -154,9 +149,14 @@
 			</td>
 			<td>
 				<select class="form-control" name="unit[]">
-					<option value="个" {eq name="v.4" value= "个"} selected="selected" {/eq}>个</option>
-					<option value="千克" {eq name="v.4" value= "千克"} selected="selected" {/eq}>千克</option>
-					<option value="吨" {eq name="v.4" value= "吨"} selected="selected" {/eq}>吨</option>
+<!--					{eq name="1" value= "$info.state"} <option value="袋" {eq name="v.4" value= "袋"} selected="selected" {/eq}>袋</option> {/eq}>-->
+<!--					{eq name="1" value= "$info.state"} <option value="盒" {eq name="v.4" value= "盒"} selected="selected" {/eq}>盒</option> {/eq}>-->
+<!--					{eq name="1" value= "$info.state"} <option value="箱" {eq name="v.4" value= "箱"} selected="selected" {/eq}>箱</option> {/eq}>-->
+<!--					{eq name="3" value= "$info.state"} <option value="千克" {eq name="v.4" value= "千克"} selected="selected" {/eq}>千克</option> {/eq}>-->
+<!--					{eq name="3" value= "$info.state"} <option value="只" {eq name="v.4" value= "只"} selected="selected" {/eq}>只</option> {/eq}>-->
+<!--					{eq name="3" value= "$info.state"} <option value="箱" {eq name="v.4" value= "箱"} selected="selected" {/eq}>箱</option> {/eq}>-->
+<!--					{eq name="3" value= "$info.state"} <option value="个" {eq name="v.4" value= "个"} selected="selected" {/eq}>个</option> {/eq}>-->
+					<option value="{$v.4}"  selected="selected" >{$v.4}</option>
 				</select>
 			</td>
 			<td class="col-md-2"><input type="date" class="form-control" value="{$v.3}" name="time[]" ></td>

@@ -2,53 +2,53 @@
 
 
 <form class="validate add-form" novalidate="novalidate" style="width: auto">
-    <div class="row">
-        <div class="col-md-12">
-            <div class="form-group">
-                <label for="field-2" class="control-label">订单号</label>
-                <input type="text" class="form-control" name="sn" placeholder="订单号" value="SN{:date('Ymdhis',time())}{:rand(10000,99999)}">
-            </div>
-        </div>
-        <div class="col-md-12"> </div>
-    </div>
 
-    <div class="row">
+	<div class="row">	
+		<div class="col-md-12">
+			<div class="form-group">
+				<label for="field-2" class="control-label">订单号</label>
+				<input type="text" class="form-control" name="sn" placeholder="订单号" value="SN{:date('Ymdhis',time())}{:rand(10000,99999)}">
+			</div>	
+		</div>
+        <div class="col-md-12"> </div>
+	</div>
+
+    <div class="row">   
         <div class="col-md-4">
             <div class="form-group">
                 <label for="field-2" class="control-label">制单人</label>
                 <input type="text" class="form-control" name="author" placeholder="制单人" value="{$my_info->truename}">
-            </div>
+            </div>  
         </div>
         <div class="col-md-4">
             <div class="form-group">
                 <label class="control-label">出库类型</label>
                 <select class="form-control"  disabled>
-                    {eq name="2" value= "$state"}      <option value="采购出库" selected>成品出库</option> {/eq}>
-                    {eq name="4" value= "$state"}      <option value="采购出库" selected>材料出库</option> {/eq}>
-                </select>
+                    <option value="采购出库" selected>成品出库</option>
+                </select>  
             </div>
         </div>
         <div class="col-md-4">
             <div class="form-group">
                 <label class="control-label">供应商</label>
                 <select class="form-control" name="supplier">
-                    <option value="默认" >默认</option>
-                    {volist name='supplier' id='vo'}
-                    <option value="{$vo.name}">{$vo.name}</option>
-                    {/volist}
-                </select>
+                        <option value="默认" >默认</option>
+                        {volist name='supplier' id='vo'}
+                        <option value="{$vo.name}">{$vo.name}</option>
+                        {/volist}
+                </select>  
             </div>
-        </div>
+        </div>        
     </div>
 
     <input type="hidden" name="state" value="{$state}">
     <input type="hidden" name="type" value="{$type}">
-    <div class="row">
+    <div class="row">   
         <div class="col-md-4">
             <div class="form-group">
                 <label for="field-2" class="control-label">出库复核人员</label>
                 <input type="text" class="form-control" name="outstorage_checker" placeholder="出库复核人员" value="{$my_info->truename}">
-            </div>
+            </div>  
         </div>
         <div class="col-md-4">
             <div class="form-group">
@@ -63,48 +63,20 @@
             </div>
         </div>
     </div>
-    <div class="col-md-4">
-        <div class="form-group">
-            <label class="control-label">
-                {eq name="$state" value="2"} 产品名称--先选择产品在选规格  ： 产品名称 {/eq}
-                {eq name="$state" value="4"} 产品名称--先选择产品在选规格  ： 材料名称 {/eq}
-            </label>
-            <select class="form-control" name="product_id" onchange="changeProduct(this)" id="checkedProduct">
-                <option value="默认" >默认</option>
-                {volist name='product' id='vo'}
-                <option value="{$vo.id}">{$vo.name}</option>
-                {/volist}
-            </select>
-        </div>
-    </div>
-    <script>
 
-        function changeProduct(obj){
-            var product_id = $(obj).val();
-            var url = "{:url('Instorage/spec')}"+"?product_id="+product_id;
-            jQuery.ajax({
-                url: url,
-                success: function(response)
-                {
-                    jQuery('#spec_table').html(response);
-                }
-            });
-        }
 
-        var checkedProduct = jQuery('#checkedProduct');
-        changeProduct(checkedProduct);
-        jQuery('#return_product').hide();
-    </script>
-
-    <table class="table table-striped table-bordered table-hover dataTable " id="spec_table">
-        <!-- <thead>
+    <table class="table table-striped table-bordered table-hover dataTable no-footer">
+        <thead>
             <tr role="row">
                 <th></th>
                 <th class="sorting_disabled" rowspan="1" colspan="1">
                     产品名称
                 </th>
                 <th class="sorting_disabled" rowspan="1" colspan="1">
-                    入库数
+                    出库数
+                </th>
+                <th class="sorting_disabled" rowspan="1" colspan="1">
+                    单位
                 </th>
                 <th class="sorting_disabled" rowspan="1" colspan="1">
                     有效期
@@ -114,34 +86,65 @@
         </thead>
         <tbody>
             <tr role="row" class="odd order-list">
-                <td  class="col-md-2">
-                    <a href="javascript:void(0);" onclick="add_list(this)"> [ + ] </a>
+                <td>
+                    <a href="javascript:void(0);" onclick="add_list(this)"> [ + ] </a> 
                 </td>
-                <td class="col-md-2">
-                    <select name="product[]" class="form-control" onchange="changeDanwei(this)">
+                <td> 
+                    <select name="product[]" class="form-control" onchange="changeProduct(this)">
+                        <option value="">请选择商品</option>
                         {volist name='product' id='vo'}
-                        <option value="{$vo.sn}_{$vo.name}_{$vo.price}_{$vo.storage}_{$vo.unit}">{$vo.name}</option>
+                        <option value="{$vo.sn}_{$vo.name}_{$vo.price}_{$vo.storage}_{$vo.unit}_{$vo.unit1}_{$vo.unit2}_{$vo.unit3}">{$vo.name}</option>
                         {/volist}
+                    </select> 
+                </td>
+                <td><input type="text" class="form-control" value="" name="num[]"></td>
+                <td>
+                    <select class="form-control" name="unit[]">
                     </select>
                 </td>
-                <td>
-                <input type="text" class="form-control" value="" name="num[]">
-                </td>
+
                 <td class="col-md-2"><input type="date" class="form-control" value="" name="time[]" ></td>
-                <td class="col-md-2">
+                <td>
                 	<a class="delete" href="javascript:void(0)" onclick="del_list(this)"> [ - ] </a>
                 </td>
             </tr>
 
-        </tbody> -->
+        </tbody>
     </table>
 
 
+    <script>
+        function changeProduct(obj){
+            var a = $(obj).val();
+            $(obj).parent().next().next().children('select').children().remove();
+            strs=a.split("_");
+            console.log(strs);
+            var str = '';
+            console.info(strs[5]);
+            console.info(strs[6]);
+            console.info(strs[7]);
 
 
-	<div class="row" style="padding-top: 20px;">
+            if(strs[5]){
+                str = str + '<option value="'+strs[5]+'" >'+strs[5]+'</option>';
+            }
+            if(strs[6]){
+                str =  str +'<option value="'+strs[6]+'" >'+strs[6]+'</option>';
+            }
+            if(strs[7]){
+                str =  str +'<option value="'+strs[7]+'" >'+strs[7]+'</option>';
+            }
+            if(str){
+                str =  str +'<option value="'+strs[4]+'" >'+strs[4]+'</option>';
+            }
+
+            $(obj).parent().next().next().children('select').append(str);
+        }
+    </script>
+
+	<div class="row">
 		<div class="col-md-12">
-			<div class="form-group">
+			<div class="form-group no-margin">
 				<label for="field-7" class="control-label">备注</label>
 				<textarea class="form-control autogrow" name="desc" placeholder="备注" style="overflow: hidden; word-wrap: break-word; resize: horizontal; height: 50px;"></textarea>
 			</div>	
@@ -157,10 +160,6 @@
 
 
 <script>
-    function changeDanwei(obj) {
-        // var product_id = $(obj).val();
-        // alert(product_id);
-    }
 
 function add_list(obj){
     // $(obj).parent().parent().hide();

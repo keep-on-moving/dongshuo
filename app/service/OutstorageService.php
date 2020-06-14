@@ -1,5 +1,6 @@
 <?php
 namespace app\service;
+use app\model\Spec;
 use think\Db;
 use think\Request,
 	app\model\Order,
@@ -46,69 +47,89 @@ class OutstorageService
 
     // 保存数据
     public function save(){
-    	Request::instance()->isPost() || die('request not  post!');
-    	
-		$param = Request::instance()->param();	//获取参数
-		$error = $this->_validate($param); 		// 是否通过验证
+        Request::instance()->isPost() || die('request not  post!');
 
+        $param = Request::instance()->param();	//获取参数
+        $error = $this->_validate($param); 		// 是否通过验证
 
-		if( is_null( $error ) ){
-
-			$order 				= new Order();
-			$order->sn 			= $param['sn'];
-			$order->type 		= $param['type'];
-			$order->desc 		= $param['desc'];
-			$order->author 		= $param['author'];
-			$order->supplier 	= $param['supplier'];
-			$order->outstorage_checker = $param['outstorage_checker'];
-			$order->outstorage_curator = $param['outstorage_curator'];
-			$order->outstorage_consignee = $param['outstorage_consignee'];
-			$order->state 		= 2;
-			$order->add_time	= time();
-
-			$temp = [];
-			$productModel = new Product();
+        if( is_null( $error ) ){
+            $order 				= new Order();
+            $order->sn 			= $param['sn'];
+            $order->type 		= $param['type'];
+            $order->desc 		= $param['desc'];
+            $order->author 		= $param['author'];
+            $order->supplier 	= $param['supplier'];
+            $order->outstorage_checker = $param['outstorage_checker'];
+            $order->outstorage_curator = $param['outstorage_curator'];
+            $order->outstorage_consignee = $param['outstorage_consignee'];
+            $order->state 		= $param['state'];
+            $order->add_time	= time();
+            $order->product_id  = $param['product_id'];
+            $temp = [];
             Db::startTrans();
-			foreach ( $param['product'] as $k=>$v) {
-				$vv = explode('_',$v);
-				$product = Product::get([ 'sn' => $vv[0] ]);
-				$pNum = $product->num;
-				$param['num'][$k] = sprintf("%.2f",  $param['num'][$k]);
-				$product->num =  bcsub($pNum,$param['num'][$k],2);
-				if($product->num < 0){
-                    Db::rollback();
-					return ['error'	=>	100,'msg'	=>	'保存失败:'.$product->name.'仅有'.$pNum.$product->unit."低于要出库个数！"];
-				}
-				$product->save();
-				$temp[] =  [
-					$vv[0],
-					$vv[1],
-					$param['num'][$k],
-					$param['time'][$k],
-					$productModel->changeUnit($product->id, $param['num'][$k]),
-					$vv[2],
-					$vv[3],
-					$vv[4],
-				];
-			}
+            if(isset($param['spec_id'])){
+                $total = 0;
+                $productModel = new Product();
+                foreach ( $param['spec_id'] as $k=>$v) {
+                    $param['num'][$k] = sprintf("%.2f", $param['num'][$k]);
+                    if ($order->state == 1){
+                        if($param['num'][$k] > 0){
+                            $numData = $productModel->tarPacket($param['product_id'], $param['unit'][$k], $param['num'][$k]);
+                            if($numData['code'] == 400){
+                                Db::commit();
+                                return ['error'	=>	100,'msg'	=> $numData['msg']];
+                            }
+                        }else{
+                            $numData['msg'] =  0;
+                        }
+                    }else{
+                        $numData['msg'] =  $param['num'][$k];
+                    }
 
-			$order->res = json_encode( $temp );
-			// dump( $order->res );
-			// $order->res 		= $param['res'];
-			// die();
+                    $temp[] =  [
+                        $v,
+                        $param['spec_name'][$k],
+                        $param['num'][$k],
+                        $param['time'][$k],
+                        $param['unit'][$k],
+                        $numData['msg']
+                    ];
 
-			// 检测错误
-			if( $order->save() ){
+                    $pec = Spec::get([ 'id' => $v ]);
+                    if(!$param['num'][$k]){
+                        $param['num'][$k] = 0;
+                    }
+                    if($pec->store < $numData['msg']){
+                        $msg = '规格为：'.$param['spec_name'][$k].'现有库存为'.$pec->store.'，您要出库'.$param['num'][$k].$param['unit'][$k].'需要出库量为'.$numData['msg'];
+                        return ['error'	=>	100,'msg'	=> $msg];
+                    }
+                    $total = bcadd($total, $numData['msg']);
+                    $pec->store =  bcadd($numData['msg'], $pec->store, 2);
+
+                    $pec->save();
+                }
+
+                if($order->state == 1){
+                    $order->expected_num = $total;
+                }
+
+                $order->res = json_encode( $temp );
+
+            }
+
+
+            // 检测错误
+            if( $order->save() ){
                 Db::commit();
-				return ['error'	=>	0,'msg'	=>	'保存成功'];
-			}else{
+                return ['error'	=>	0,'msg'	=>	'保存成功'];
+            }else{
                 Db::rollback();
-				return ['error'	=>	100,'msg'	=>	'保存失败'];	
-			}
-			
-		}else{
-			return ['error'	=>	100,'msg'	=>	$error];
-		}
+                return ['error'	=>	100,'msg'	=>	'保存失败'];
+            }
+
+        }else{
+            return ['error'	=>	100,'msg'	=>	$error];
+        }
 
     }
 
@@ -131,14 +152,13 @@ class OutstorageService
                 return ['error'	=>	100,'msg' => '订单已经生成24小时，不支持修改！'];
             }
 			$order->sn 			= $param['sn'];
-			$order->type 		= $param['type'];
 			$order->desc 		= $param['desc'];
 			$order->author 		= $param['author'];
 			$order->supplier 	= $param['supplier'];
 			$order->outstorage_checker = $param['outstorage_checker'];
 			$order->outstorage_curator = $param['outstorage_curator'];
 			$order->outstorage_consignee = $param['outstorage_consignee'];
-			$order->state 		= 2;
+            $order->product_id  = $param['product_id'];
 
 			$temp = [];
 			$productModel = new Product();
@@ -148,31 +168,55 @@ class OutstorageService
             if($res){
                 $res = json_decode($res, true);
                 foreach ($res as $val){
-                    \db('product')->where('sn', $val[0])->setInc('num', $val[2]);
+                    \db('product_spec')->where('id', $val[0])->setDec('store', $val[5]);
                 }
             }
-			foreach ( $param['product'] as $k=>$v) {
-				$vv = explode('_',$v);
-				$product = Product::get([ 'sn' => $vv[0] ]);
-				$pNum = $product->num;
-                $param['num'][$k] = sprintf("%.2f",  $param['num'][$k]);
-                $product->num =  bcsub($pNum,$param['num'][$k],2);
-				if($product->num < 0){
-				    Db::rollback();
-					return ['error'	=>	100,'msg'	=>	'保存失败:'.$product->name.'仅有'.$pNum.$product->unit."低于要出库个数！"];
-				}
-				$product->save();
-				$temp[] =  [
-					$vv[0],
-					$vv[1],
-					$param['num'][$k],
-					$param['time'][$k],
-					$productModel->changeUnit($product->id, $param['num'][$k]),
-					$vv[2],
-					$vv[3],
-					$vv[4],
-				];
-			}
+
+            $total = 0;
+            foreach ( $param['spec_id'] as $k=>$v) {
+                $param['num'][$k] = sprintf("%.2f", $param['num'][$k]);
+                if ($order->state == 1){
+                    if($param['num'][$k] > 0){
+                        $numData = $productModel->tarPacket($param['product_id'], $param['unit'][$k], $param['num'][$k]);
+                        if($numData['code'] == 400){
+                            Db::commit();
+                            return ['error'	=>	100,'msg'	=> $numData['msg']];
+                        }
+                    }else{
+                        $numData['msg'] =  0;
+                    }
+                }else{
+                    $numData['msg'] =  $param['num'][$k];
+                }
+
+                $temp[] =  [
+                    $v,
+                    $param['spec_name'][$k],
+                    $param['num'][$k],
+                    $param['time'][$k],
+                    $param['unit'][$k],
+                    $numData['msg']
+                ];
+
+                $pec = Spec::get([ 'id' => $v ]);
+                if(!$param['num'][$k]){
+                    $param['num'][$k] = 0;
+                }
+                if($pec->store < $numData['msg']){
+                    $msg = '规格为：'.$param['spec_name'][$k].'现有库存为'.$pec->store.'，您要出库'.$param['num'][$k].$param['unit'][$k].'需要出库量为'.$numData['msg'];
+                    Db::rollback();
+                    return ['error'	=>	100,'msg'	=> $msg];
+                }
+
+                $total = bcadd($total, $numData['msg']);
+                $pec->store =  bcadd($numData['msg'], $pec->store, 2);
+
+                $pec->save();
+            }
+
+            if($order->state == 1){
+                $order->expected_num = $total;
+            }
 			
 			$order->res = json_encode( $temp );
 
@@ -182,7 +226,7 @@ class OutstorageService
 				return ['error'	=>	0,'msg'	=>	'修改成功'];
 			}else{
 			    Db::rollback();
-				return ['error'	=>	100,'msg'	=>	'修改失败'];	
+				return ['error'	=>	100,'msg'	=>	'修改失败,请确认您是否有数据修改！'];
 			}
 		}else{
 			return ['error'	=>	100,'msg'	=>	$error];

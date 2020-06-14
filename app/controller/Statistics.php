@@ -5,13 +5,15 @@ use app\service\OutstorageService,
     app\model\Product,
     app\model\Supplier,
     app\model\Unit,
+    app\model\Statistics as StatisticsModel,
     app\model\Order;
+use app\service\StatisticsService;
 use think\Request;
 
-class Outstorage extends Base
+class Statistics extends Base
 {
     protected $service;
-    public function __construct(OutstorageService $service)
+    public function __construct(StatisticsService $service)
     {
         parent::__construct();
         $this->service = $service;
@@ -26,7 +28,7 @@ class Outstorage extends Base
     public function create()
     {
         $data 	= Request::instance()->get();
-        $product = Product::all(  [ 'status' => 0, 'state' => $data['state'] ] );
+        $product = Product::all(  [ 'status' => 0, 'state' => 2 ] );
         foreach ($product as $key => $val){
             $unit1 = Unit::get(['id', $val['unit1']]);
             $unit2 = Unit::get(['id', $val['unit2']]);
@@ -46,9 +48,7 @@ class Outstorage extends Base
         }
         $this->assign([
             'product'    =>  $product,
-            'supplier'   =>  Supplier::all(  [ 'status' => 0 ] ),
-            'state' => $data['state'] == 1 ? 2 : 4,
-            'type' => $data['state'] == 1 ? '成品出库' : '材料出库'
+            'product_finish' =>  Product::all(  [ 'status' => 0, 'state' => 1 ] )
         ]);
 
         return view();
@@ -85,9 +85,9 @@ class Outstorage extends Base
     public function show($id)
     {
         $this->assign([
-            'product'    =>  Product::all(  [ 'status' => 0 ] ),
-            'supplier'   =>  Supplier::all(  [ 'status' => 0 ] ),
-            'info'       =>  Order::get(['id'=>$id]),
+            'product'    =>  Product::all(  [ 'status' => 0,'state' => 2] ),
+            'info'       =>  StatisticsModel::get(['id'=>$id]),
+            'product_finish' =>  Product::all(  [ 'status' => 0, 'state' => 1 ] )
         ]);
         return view();
     }
@@ -99,36 +99,12 @@ class Outstorage extends Base
 
     public function edit($id)
     {
-        $order = Order::get(['id'=>$id]);
-        $product = Product::get(['id', $order['product_id']]);
-
-        $unit = [];
-        $unit1 = Unit::get(['id', $product['unit1']]);
-        $unit2 = Unit::get(['id', $product['unit2']]);
-        $unit3 = Unit::get(['id', $product['unit3']]);
-        if($unit1){
-            $unit[] = $unit1['name'];
-        }
-        if($unit2){
-            $unit[] = $unit2['name'];
-        }
-        if($unit3){
-            $unit[] = $unit3['name'];
-        }
-
-        if(!$unit){
-            $unit[] = $product['unit'];
-        }
-
-        $state = 2;
-        if($order['state'] == 2){
-            $state = 1;
-        }
         $this->assign([
-            'product'    =>  Product::all(  [ 'status' => 0 ,'state' => $state] ),
+            'product'    =>  Product::all(  [ 'status' => 0 ,'state' => 2] ),
             'supplier'   =>  Supplier::all(  [ 'status' => 0 ] ),
             'info'  =>  $this->service->edit($id),
-            'units' => $unit
+            'product_finish' =>  Product::all(  [ 'status' => 0, 'state' => 1 ] )
+
         ]);
 
         return view();
@@ -141,14 +117,48 @@ class Outstorage extends Base
     public function delete($id){
         return $this->service->delete($id);
     }
-    
-    public function prints($id)
-    {
-        $this->assign([
-            'product'    =>  Product::all(  [ 'status' => 0 ] ),
-            'supplier'   =>  Supplier::all(  [ 'status' => 0 ] ),
-            'info'       =>  Order::get(['id'=>$id]),
-        ]);
+
+    public function dobudget(){
+        $param = Request::instance()->param();	//获取参数
+        $statistics = StatisticsModel::get(['id' => $param['id']]);
+        $pid = $statistics['product_id'];
+        $res = json_decode($statistics['res'], true);
+
+        $product = \db('product')->find($pid);
+        $data = array(
+            'num' => 0,
+            'msg' => '该商品还没有设置材料'
+        );
+        if($res){
+            $canMakeNum = 0;
+            if($res){
+                $successNum = [];
+                foreach ($res as $val){
+                    $store = db('product_spec')->where('product_id', $val[0])->sum('store');
+                    if($store){
+                        $successNum[] = bcdiv($store, $val[3], 0);
+                    }
+                }
+
+                if(count($successNum) == count($res)){
+                    $canMakeNum = min($successNum);
+                }
+            }
+            $productModel = new Product();
+
+            $msg = '部分材料不足，不能生产产品';
+            if($canMakeNum){
+                $msg = '可以生产'.$product['name'].$canMakeNum.$product['unit'].'，初步统计：'.$productModel->changeUnit($pid, $canMakeNum);
+            }
+
+            $data = array(
+                'num' => $canMakeNum,
+                'msg' => $msg
+            );
+        }
+
+        $this->assign('info', $data);
+
         return view();
     }
 

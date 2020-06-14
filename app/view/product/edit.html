@@ -116,19 +116,28 @@
 
 
 	<div class="row">	
-		<div class="col-md-6">
-			<div class="form-group">
-				<label for="field-2" class="control-label">产品规格</label>
-				
-				<input type="text" class="form-control" name="spec" placeholder="产品规格" value="{$info.spec}">
-			</div>	
-		</div>
+<!--		<div class="col-md-6">-->
+<!--			<div class="form-group">-->
+<!--				<label for="field-2" class="control-label">产品规格</label>-->
+<!--				-->
+<!--				<input type="text" class="form-control" name="spec" placeholder="产品规格" value="{$info.spec}">-->
+<!--			</div>	-->
+<!--		</div>-->
 		<div class="col-md-6">
 			<div class="form-group">
 				<label for="field-2" class="control-label">产品价格</label>
 				
 				<input type="text" class="form-control" name="price" placeholder="产品价格" value="{$info.price}">
 			</div>	
+		</div>
+		<div class="col-md-6">
+			<div class="form-group">
+				<label class="control-label">产品类型</label>
+				<select class="form-control" name="state">
+					<option value="1" {eq name="$info.state" value="1"} selected="selected" {/eq}>成品</option>
+					<option value="2" {eq name="$info.state" value="2"} selected="selected" {/eq}>材料</option>
+				</select>
+			</div>
 		</div>
 	</div>
 
