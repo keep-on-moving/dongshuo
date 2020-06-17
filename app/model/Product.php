@@ -65,7 +65,7 @@ class Product extends Model
         }
         if ($product['unit2'] == $unitInfo['id']){//如果顶级单位为默认单位的母单位
             if($instorageUnit['id'] == $product['unit1']){
-                $num = bcdiv($num, $product['unit1_num'], 0) * $product['unit2_num'];
+                $num = bcdiv($product['unit2_num'], $product['unit1_num'], 0) * $num;
             }
 
             return ['code' => 200, 'msg' => $num];
@@ -73,9 +73,9 @@ class Product extends Model
 
         if ($product['unit3'] == $unitInfo['id']){//如果顶级单位为默认单位的母单位
             if($instorageUnit['id'] == $product['unit1']){
-                $num = bcdiv($num, $product['unit1_num'], 0) * $product['unit3_num'];
+                $num = bcdiv($product['unit3_num'], $product['unit1_num'], 0) * $num;
             }elseif ($instorageUnit['id'] == $product['unit2']){
-                $num = bcdiv($num, $product['unit2_num'], 0) * $product['unit3_num'];
+                $num = bcdiv($product['unit3_num'], $product['unit2_num'], 0) * $num;
             }
 
             return ['code' => 200, 'msg' => $num];

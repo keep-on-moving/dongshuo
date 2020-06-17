@@ -82,9 +82,9 @@
         <th class="sorting_disabled" rowspan="1" colspan="1">
             单位
         </th>
-        <th class="sorting_disabled" rowspan="1" colspan="1">
-            转换单位
-        </th>
+<!--        <th class="sorting_disabled" rowspan="1" colspan="1">-->
+<!--            转换单位-->
+<!--        </th>-->
         <th class="sorting_disabled" rowspan="1" colspan="1">
             保质期
         </th>
@@ -107,7 +107,7 @@
         </td>
         <td><input type="text" class="form-control" style="text-align: center"  value="{$v[2]}" disabled="disabled"></td>
         <td><input type="text" class="form-control" style="text-align: center"  value="{$v[4]}" disabled="disabled"></td>
-        <td><input type="text" class="form-control" style="text-align: center"  value="{$v[5]}" disabled="disabled"></td>
+<!--        <td><input type="text" class="form-control" style="text-align: center"  value="{$v[5]}" disabled="disabled"></td>-->
         <td><input type="text" class="form-control" style="text-align: center"  value="{$v[3]}" disabled="disabled"></td>
     </tr>
     <?php endforeach; ?>
@@ -125,7 +125,15 @@
 			</div>	
 		</div>
 	</div>
-
+    <div class="row">
+        <div class="col-md-12">
+            <div class="form-group no-margin">
+                <label for="field-7" class="control-label">初步统计</label>
+                <textarea class="form-control autogrow" name="desc" disabled="disabled"
+                          style="overflow: hidden; word-wrap: break-word; resize: horizontal; height: 50px;">{$info.expected_num}</textarea>
+            </div>
+        </div>
+    </div>
 	
 </form>
 

@@ -177,7 +177,7 @@
                                 <th>产品名称</th>
                                 <th>类别</th>
                                 <th>单位</th>
-                                <th>价格</th>
+                                <th>类型</th>
                                 <th>仓库</th>
                                 <th>库位</th>
                                 <th>供应商</th>
@@ -199,7 +199,7 @@
                                 <td> {$user.name} </td>
                                 <td> {$user.category} </td>
                                 <td> {$user.unit} </td>
-                                <td> {$user.price} </td>
+                                <td> {$user.state == 1 ? '成品' : '材料'} </td>
                                 <td> {$user.storage} </td>
                                 <td> {$user.location} </td>
                                 <td> {$user.supplier} </td>

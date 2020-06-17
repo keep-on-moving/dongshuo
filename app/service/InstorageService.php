@@ -69,6 +69,7 @@ class InstorageService
 			$order->product_id  = $param['product_id'];
 			$order->return_num  = sprintf("%.2f", $param['return_num']);
 			$order->effective_time = $param['effective_time'] ? $param['effective_time']: null;
+			$product = Product::getById($param['product_id']);
 
 			$temp = [];
             Db::startTrans();
@@ -90,7 +91,6 @@ class InstorageService
                     }else{
                         $numData['msg'] =  $param['num'][$k];
                     }
-
                     $temp[] =  [
                         $v,
                         $param['spec_name'][$k],
@@ -112,12 +112,11 @@ class InstorageService
                 }
 
                 if($order->state == 1){
-                    $order->expected_num = $total;
+                    $order->expected_num = $total.$product['unit'];
                 }
 
                 $order->res = json_encode( $temp );
             }
-
 
             // 检测错误
 			if( $order->save() ){
@@ -161,6 +160,7 @@ class InstorageService
             $order->product_id  = $param['product_id'];
             $order->return_num  = sprintf("%.2f", $param['return_num']);
             $order->effective_time = $param['effective_time'] ? $param['effective_time'] : null;
+            $product = Product::getById($param['product_id']);
 
             $temp = [];
             Db::startTrans();
@@ -169,7 +169,7 @@ class InstorageService
             if($res){
                 $res = json_decode($res, true);
                 foreach ($res as $val){
-                    \db('product_spec')->where('id', $val[0])->setDec('store', $val[2]);
+                    \db('product_spec')->where('id', $val[0])->setDec('store', $val[5]);
                 }
             }
 
@@ -212,7 +212,7 @@ class InstorageService
                     $pec->save();
                 }
                 if($order->state == 1){//TODO 如果是成品则，显示入库多少个，单位换算
-                    $order->expected_num = $total;
+                    $order->expected_num = $total.$product['unit'];
                 }
             }
 
