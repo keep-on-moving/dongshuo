@@ -10,7 +10,7 @@ use think\Request,
 class OutstorageService
 {
 
-    public function page(){
+    public function page($state){
 
     	$data 	= Request::instance()->get();
     	$where 	= [];
@@ -26,7 +26,7 @@ class OutstorageService
         }elseif(isset($data['end_time']) && $data['end_time']){
             $where['add_time'] = ['<', strtotime($data['end_time'])];
         }
-    	$where['state'] 		= 	2;
+    	$where['state'] 		= 	$state;
 
 		$data = Order::where($where)->order('id', 'desc')->paginate(10000);
 		foreach ($data as $key => $val){

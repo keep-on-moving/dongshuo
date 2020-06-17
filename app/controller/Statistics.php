@@ -28,24 +28,32 @@ class Statistics extends Base
     public function create()
     {
         $data 	= Request::instance()->get();
-        $product = Product::all(  [ 'status' => 0, 'state' => 2 ] );
-        foreach ($product as $key => $val){
-            $unit1 = Unit::get(['id', $val['unit1']]);
-            $unit2 = Unit::get(['id', $val['unit2']]);
-            $unit3 = Unit::get(['id', $val['unit3']]);
-            $product[$key]['unit1'] = '';
-            $product[$key]['unit2'] = '';
-            $product[$key]['unit3'] = '';
-            if($unit1){
-                $product[$key]['unit1'] = $unit1['name'];
-            }
-            if($unit2){
-                $product[$key]['unit2'] = $unit2['name'];
-            }
-            if($unit3){
-                $product[$key]['unit3'] = $unit3['name'];
-            }
-        }
+//        $product = Product::all(  [ 'status' => 0, 'state' => 2 ] );
+//        foreach ($product as $key => $val){
+//            $unit1 = Unit::get(['id', $val['unit1']]);
+//            $unit2 = Unit::get(['id', $val['unit2']]);
+//            $unit3 = Unit::get(['id', $val['unit3']]);
+//            $product[$key]['unit1'] = '';
+//            $product[$key]['unit2'] = '';
+//            $product[$key]['unit3'] = '';
+//            if($unit1){
+//                $product[$key]['unit1'] = $unit1['name'];
+//            }
+//            if($unit2){
+//                $product[$key]['unit2'] = $unit2['name'];
+//            }
+//            if($unit3){
+//                $product[$key]['unit3'] = $unit3['name'];
+//            }
+//        }
+
+        $product = db('product_spec')
+            ->alias('s')
+            ->field('p.*, s.id sid, s.store, s.spec_name, s.add_time sadd_time')
+            ->join('product p', 'p.id = s.product_id')
+            ->where('p.state', 2)
+            ->select();
+
         $this->assign([
             'product'    =>  $product,
             'product_finish' =>  Product::all(  [ 'status' => 0, 'state' => 1 ] )
@@ -84,8 +92,14 @@ class Statistics extends Base
 
     public function show($id)
     {
+        $product = db('product_spec')
+            ->alias('s')
+            ->field('p.*, s.id sid, s.store, s.spec_name, s.add_time sadd_time')
+            ->join('product p', 'p.id = s.product_id')
+            ->where('p.state', 2)
+            ->select();
         $this->assign([
-            'product'    =>  Product::all(  [ 'status' => 0,'state' => 2] ),
+            'product'    =>  $product,
             'info'       =>  StatisticsModel::get(['id'=>$id]),
             'product_finish' =>  Product::all(  [ 'status' => 0, 'state' => 1 ] )
         ]);
@@ -99,8 +113,15 @@ class Statistics extends Base
 
     public function edit($id)
     {
+        $product = db('product_spec')
+            ->alias('s')
+            ->field('p.*, s.id sid, s.store, s.spec_name, s.add_time sadd_time')
+            ->join('product p', 'p.id = s.product_id')
+            ->where('p.state', 2)
+            ->select();
+
         $this->assign([
-            'product'    =>  Product::all(  [ 'status' => 0 ,'state' => 2] ),
+            'product'    => $product,
             'supplier'   =>  Supplier::all(  [ 'status' => 0 ] ),
             'info'  =>  $this->service->edit($id),
             'product_finish' =>  Product::all(  [ 'status' => 0, 'state' => 1 ] )
@@ -134,9 +155,9 @@ class Statistics extends Base
             if($res){
                 $successNum = [];
                 foreach ($res as $val){
-                    $store = db('product_spec')->where('product_id', $val[0])->sum('store');
-                    if($store){
-                        $successNum[] = bcdiv($store, $val[3], 0);
+                    $spec = \app\model\Spec::getById($val[0]);
+                    if($spec){
+                        $successNum[] = bcdiv($spec['store'], $val[3], 0);
                     }
                 }
 

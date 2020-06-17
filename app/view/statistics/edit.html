@@ -67,7 +67,7 @@
                 <select name="product[]" class="form-control" onchange="changeProduct(this)">
                     <option value="">请选择商品</option>
                     {volist name='product' id='vo'}
-                    <option value="{$vo.id}_{$vo.sn}_{$vo.name}_{$vo.price}_{$vo.storage}_{$vo.unit}_{$vo.unit1}_{$vo.unit2}_{$vo.unit3}"  {eq name="vo.id" value= "$v.0"} selected="selected" {/eq}>{$vo.name}</option>
+                    <option value="{$vo.sid}_{$vo.sn}_{$vo.name}_{$vo.spec_name}_{$vo.price}_{$vo.storage}_{$vo.unit}_{$vo.unit1}_{$vo.unit2}_{$vo.unit3}"  {eq name="vo.sid" value= "$v.0"} selected="selected" {/eq}>产品：{$vo.name}规格：{$vo.spec_name}</option>
                     {/volist}
                 </select>
             </td>

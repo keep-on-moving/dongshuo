@@ -132,8 +132,12 @@ class Instorage extends Base
 
     public function export(){
         $param = Request::instance()->get();
-        $data = $this->service->page()->toArray();
-        $name=$param['start_time'].'至'.$param['end_time'].'入库单';
+        $data = $this->service->page($param['state'])->toArray();
+        $type = '成品';
+        if($param['state'] == 3){
+            $type = '材料';
+        }
+        $name=$param['start_time'].'至'.$param['end_time'].$type.'入库单';
         $header=[['id','出库单id'],['sn','出库单编号'],['author', '制表人'],['supplier', '供应商'], ['type', '出库类型'], ['instorage_checker_a','入库审核人A'], ['instorage_checker_b','入库审核人B'], ['add_time','创单时间'],['info','入库单详情'] ,['desc','备注']];
         $newdata = [];
         foreach ($data['data'] as $key => $value){

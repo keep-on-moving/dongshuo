@@ -158,8 +158,12 @@ class Outstorage extends Base
     }
     public function export(){
         $param = Request::instance()->get();
-        $data = $this->service->page()->toArray();
-        $name=$param['start_time'].'至'.$param['end_time'].'出库单';
+        $data = $this->service->page($param['state'])->toArray();
+        $type = '成品';
+        if($param['state'] == 4){
+            $type = '材料';
+        }
+        $name=$param['start_time'].'至'.$param['end_time'].$type.'出库单';
         $header=[['id','出库单id'],['sn','出库单编号'],['author', '制表人'],['supplier', '供应商'], ['type', '出库类型'], ['outstorage_curator','保管员'], ['outstorage_consignee','提货人'], ['add_time','创单时间'],['info','出库单详情'] ,['desc','备注']];
         $newdata = [];
         foreach ($data['data'] as $key => $value){

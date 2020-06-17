@@ -56,7 +56,7 @@ class StatisticsService
                     $temp[] =  [
                         $data[0],//id
                         $data[1],
-                        $data[2],
+                        $data[2].'-'.$data[3],
                         $param['num'][$k]
                     ];
                 }
@@ -109,7 +109,7 @@ class StatisticsService
                     $temp[] = [
                         $data[0],//id
                         $data[1],
-                        $data[2],
+                        $data[2].'-'.$data[3],
                         $param['num'][$k]
                     ];
                 }
