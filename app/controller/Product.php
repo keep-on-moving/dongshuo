@@ -181,11 +181,8 @@ class Product extends Base
 
     public function store(){
         $data = Request::instance()->param();	//获取参数
-        if($data['type'] == '材料'){
-            $status = db('product_spec')->where('id', $data['id'])->update(['store' => $data['store']]);
-        }else{
-            $status = db('product')->where('id', $data['id'])->update(['num' => $data['store']]);
-        }
+        $status = db('product_spec')->where('id', $data['id'])->update(['store' => $data['store']]);
+
 
         if( $status ){
             return ['error'	=>	0,'msg'	=>	'库存修改成功'];
